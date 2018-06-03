@@ -25,6 +25,10 @@ const schema = new Schema({
   password: {
     type: String,
     trim: true
+  },
+  token: {
+    type: String,
+    trim: false
   }
 });
 
@@ -38,15 +42,19 @@ schema.pre('save', function (next) {
 
 class User {
 
-
-  constructor() {
-    return db.model('User', schema);
+  static isUserExist(username) {
+    return this.findOne({ username });
   }
+
+
+  verifyCredential(password){
+    return bcrypt.compare(password, this.password);
+  }
+
 
 
 }
 
 schema.loadClass(User);
 
-
-module.exports = User;
+module.exports = db.model('User', schema);

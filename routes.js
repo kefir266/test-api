@@ -11,5 +11,13 @@ router.use(bodyParser.json());
 
 router.post('/signin', contrUser.signIn);
 router.post('/signup', contrUser.signUp);
+router.post(
+  '/logout',
+  auth.isAuthenticated,
+  contrUser.logout);
+router.get(
+  '/info',
+  auth.isAuthenticated,
+  contrUser.info);
 
 module.exports = router;

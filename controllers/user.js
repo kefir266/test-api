@@ -1,23 +1,58 @@
 'use strict';
 const User = require('../models/user');
+const Auth = require('../auth');
 
 function signIn(req, res) {
-
+  if (req.body.username && req.body.password) {
+    User.findOne({ username: req.body.username })
+      .then((user) => {
+        if (user) {
+          user.verifyCredential(req.body.password)
+            .then((hash) => {
+              if (hash) {
+                return user._id;
+              }
+            })
+            .then((id) => {
+              const token = Auth.updateTocken(user);
+              res.json({user, token});
+            })
+            .catch((err) => res.status(401).send(err));
+        }
+      });
+  }
 }
 
-function signUp(req, res) {
+async function signUp(req, res) {
   if (req.body.username && req.body.password) {
-    const user = new User();
-    user.create({ username: req.body.username, password: req.body.password })
-      .then((result) =>
-        res.json({ result }))
-      .catch((err) => res.status(401).send(err));
+
+    if (await User.isUserExist(req.body.username)) {
+      res.status(401).send('User already exist');
+    } else {
+      const user = new User({ username: req.body.username, password: req.body.password });
+      Auth.updateTocken(user)
+       .then((result) =>
+          res.json({ result }))
+       .catch((err) => res.status(401).send(err));
+    }
   } else {
     res.status(400).send('Bad request');
   }
 }
 
+function info(req, res, next) {
+  res.json({ user: res.locals.user });
+}
+
+function logout(req, res, next) {
+  const user = res.locals.user;
+  user.token = '';
+  user.save();
+}
+
 module.exports = {
   signIn,
-  signUp
+  signUp,
+  info,
+  logout
 };
