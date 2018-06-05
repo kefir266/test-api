@@ -25,28 +25,45 @@ async function isAuthenticated(req, res, next) {
   const username = payload.username;
   const user = await User.isUserExist(username);
   if (user) {
-    if (user.token === token) {
-      res.locals.user = user;
-      await updateTocken(user);
-      next();
-      return;
+    User.findOne({ username }, 'tokens')
+      .then(result => {
+        const tokens = result.tokens.filter(function (current) {
+          return current.token === token;
+        });
+        if (tokens.length) {
+          user.tiken = tokens[0];
+          res.locals.user = user;
+          updateTocken(user);
+          next();
+        }
+      })
     }
-  }
   res.status(401).send('Not authorized');
 }
 
 function updateTocken(user){
   const expiration = +new Date() + 6000000;
   const payload = { id: user.id, username: user.username, expiration };
-  user.token = jwt.encode(payload, process.env.JWT_SECRET, ALGORITHM);
+  const token = jwt.encode(payload, process.env.JWT_SECRET, ALGORITHM);
+  if (user.token && user.token.token) {
+    user.token.token = token;
+  } else {
+    user.token = { token };
+    user.tokens.push(user.token);
+  }
   return user.save();
 }
 
-function deleteToken(user) {
-  user.token = '';
-  user.save();
+function deleteToken(user, all) {
+  if (all) {
+    user.tokens.forEach( token => token.remove())
+  } else {
+    user.token.remove();
+    return user.save();
+  }
 }
 module.exports = {
   isAuthenticated,
-  updateTocken
+  updateTocken,
+  deleteToken
 };

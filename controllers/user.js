@@ -46,8 +46,9 @@ function info(req, res, next) {
 
 function logout(req, res, next) {
   const user = res.locals.user;
-  user.token = '';
-  user.save();
+  const all = req.body.all === true || req.body.all === 'true' ;
+  Auth.deleteToken(user, all)
+    .then(() => res.json(user));
 }
 
 module.exports = {

@@ -6,6 +6,11 @@ const ObjectId = mongoose.Types.ObjectId;
 const ObjectIdSchema = Schema.Types.ObjectId;
 const bcrypt = require('bcrypt');
 const db = require('../db');
+
+const tokenSchema = new Schema({
+  token: 'string'
+});
+
 const schema = new Schema({
   _id: {
     type: ObjectIdSchema,
@@ -26,10 +31,8 @@ const schema = new Schema({
     type: String,
     trim: true
   },
-  token: {
-    type: String,
-    trim: false
-  }
+  token:  tokenSchema,
+  tokens: [tokenSchema]
 });
 
 schema.pre('save', function (next) {
